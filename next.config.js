@@ -11,7 +11,7 @@ const nextConfig = {
       },
     ],
   },
-  typedRoutes: false,
+  // Removed typedRoutes as it's not recognized in Next.js 14.1.0
 };
 
 module.exports = nextConfig;
