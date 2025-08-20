@@ -16,6 +16,7 @@ export default function ContactForm() {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
   
   const serviceOptions = [
     { id: 'web-development', label: 'Web Development' },
@@ -33,6 +34,11 @@ export default function ContactForm() {
         delete newErrors[name];
         return newErrors;
       });
+    }
+    
+    // Clear previous submission errors when user starts editing again
+    if (submitError) {
+      setSubmitError(null);
     }
   };
   
@@ -73,11 +79,28 @@ export default function ContactForm() {
     if (!validateForm()) return;
     
     setIsSubmitting(true);
+    setSubmitError(null);
     
-    // Simulate form submission
-    setTimeout(() => {
+    try {
+      // Send email using the API route
+      const response = await fetch('/api/send', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData),
+      });
+      
+      const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to send message');
+      }
+      
+      // Success
       setIsSubmitting(false);
       setIsSubmitted(true);
+      
       // Reset form after submission
       setFormData({
         name: '',
@@ -87,7 +110,11 @@ export default function ContactForm() {
         message: '',
         services: []
       });
-    }, 1500);
+    } catch (error) {
+      setIsSubmitting(false);
+      setSubmitError(error instanceof Error ? error.message : 'Something went wrong. Please try again.');
+      console.error('Form submission error:', error);
+    }
   };
   
   if (isSubmitted) {
@@ -98,7 +125,7 @@ export default function ContactForm() {
         </div>
         <h3 className="text-2xl font-bold mb-4">Message Sent!</h3>
         <p className="text-gray-600 mb-6">
-          Thank you for contacting us. We'll get back to you as soon as possible.
+          Thank you for contacting us. We've sent you a confirmation email and we'll get back to you as soon as possible.
         </p>
         <button
           type="button"
@@ -113,6 +140,12 @@ export default function ContactForm() {
   
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
+      {submitError && (
+        <div className="p-4 bg-red-50 text-red-700 rounded-lg">
+          <p>{submitError}</p>
+        </div>
+      )}
+      
       <div>
         <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
           Name <span className="text-red-500">*</span>
