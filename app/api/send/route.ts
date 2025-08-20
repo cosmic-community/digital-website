@@ -1,6 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { Resend } from 'resend';
 
+// Define a proper type for the Resend API response
+interface CreateEmailResponse {
+  // Add the properties that actually exist in the response
+  data?: {
+    id: string;
+  };
+  error?: {
+    message: string;
+    statusCode: number;
+  };
+}
+
 const resend = new Resend(process.env.RESEND_API_KEY);
 
 export async function POST(request: NextRequest) {
@@ -66,8 +78,8 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ 
       success: true, 
-      mainEmailId: mainEmailData.id,
-      confirmationEmailId: confirmationEmailData.id
+      mainEmailId: mainEmailData.data?.id || 'sent',
+      confirmationEmailId: confirmationEmailData.data?.id || 'sent'
     });
   } catch (error) {
     console.error('Email sending failed:', error);
